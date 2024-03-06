@@ -31,3 +31,6 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     map-underscore-to-camel-case: false
 
+edu-system:
+  url: https://jwxt.hbwe.edu.cn
+
