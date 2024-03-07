@@ -1,19 +1,22 @@
 package cn.edu.hbwe.gogo.entity;
 
-import lombok.*;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-
+@Setter
+@Getter
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 public class User {
+
     private Integer id;
-    private String wechatId;
-    private String phone;
+    private String username;
     private String password;
-//    private String stuId;
-//    private String stuPassword;
+    private String phone;
     private String avatar;
+    private String wechatId;
+    private String jwxtUsername;
+    private String jwxtPassword;
 
 
 }

@@ -43,9 +43,11 @@ public class UserController {
             // 调用 UserService 的 getTimetable 方法，返回一个字符串表示课表内容
             String timetable = userService.getTimetable(year, term);
             // 返回 200 状态码和课表内容
+            System.out.println("获取课表成功");
             return ResponseEntity.ok(timetable);
         } catch (Exception e) {
             // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取课表失败");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
@@ -54,8 +56,10 @@ public class UserController {
     public ResponseEntity<String> logout() {
         boolean result = userService.logout();
         if (result) {
+            System.out.println("退出成功");
             return ResponseEntity.ok("退出成功");
         } else {
+            System.out.println("退出失败");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("退出失败");
         }
     }
