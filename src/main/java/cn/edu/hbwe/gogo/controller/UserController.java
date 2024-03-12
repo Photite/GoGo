@@ -1,7 +1,6 @@
 package cn.edu.hbwe.gogo.controller;
 
-import cn.edu.hbwe.gogo.entity.ClassUnit;
-import cn.edu.hbwe.gogo.entity.SchoolCalender;
+import cn.edu.hbwe.gogo.entity.*;
 import cn.edu.hbwe.gogo.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,7 +52,6 @@ public class UserController {
             String jsonResult = mapper.writeValueAsString(timetable);
             System.out.println(jsonResult);
 
-
             // 返回 200 状态码和课表内容
             System.out.println("获取课表成功");
             return ResponseEntity.ok(timetable.toString());
@@ -77,6 +75,85 @@ public class UserController {
         } catch (Exception e) {
             // 如果发生异常，返回 500 状态码和异常信息
             System.out.println("获取学校日期失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // 定义一个获取考试信息的请求
+    @GetMapping("/exam")
+    public ResponseEntity<String> getExam(@RequestParam String stuNum) {
+        try {
+            // 调用 UserService 的 getExam 方法，返回一个字符串表示考试信息
+            List<ExamResult> exam = userService.getExamList(stuNum);
+            // 返回 200 状态码和考试信息
+            System.out.println("获取考试信息成功");
+            return ResponseEntity.ok(exam.toString());
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取考试信息失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // 定义一个获取考试详情的请求
+    @GetMapping("/examDetail")
+    public ResponseEntity<String> getExamDetail(@RequestParam String stuNum) {
+        try {
+            //新建一个ExamResult对象
+            ExamResult examResult = new ExamResult();
+            //将ExamResult(year=2023, semester=3, detailsID=04BCA1F52B453589E0658AE7472DE879, name=大学生社会实践Ⅲ, teacher=魏荣华, credit=1.0, gradePoint=4.50, crTimesGp=4.50, absoluteScore=95, relateScore=优秀, completionCode=01, degreeProgram=false)赋值给examResult
+            examResult.setYear("2023");
+            examResult.setSemester("3");
+            examResult.setDetailsID("04BCA1F52B453589E0658AE7472DE879");
+            examResult.setName("大学生社会实践Ⅲ");
+            examResult.setTeacher("魏荣华");
+            examResult.setCredit("1.0");
+            examResult.setGradePoint("4.50");
+            examResult.setCrTimesGp("4.50");
+            examResult.setAbsoluteScore("95");
+            examResult.setRelateScore("优秀");
+            examResult.setCompletionCode("01");
+            examResult.setDegreeProgram(false);
+            // 调用 UserService 的 getExamDetail 方法，返回一个字符串表示考试时间地点信息
+            List<List<String>> examDetail = userService.getExamInfo(stuNum, examResult);
+            // 返回 200 状态码和考试时间地点信息
+            System.out.println("获取考试时间地点信息成功");
+            return ResponseEntity.ok(examDetail.toString());
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取考试时间地点信息失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // 定义一个获取考试时间地点的请求
+    @GetMapping("/examTimeAndPlace")
+    public ResponseEntity<String> getExamTimeAndPlace(@RequestParam String stuNum) {
+        try {
+            // 调用 UserService 的 getExamTimeAndPlace 方法，返回一个字符串表示考试时间地点信息
+            List<ExamTimeAndPlace> examTimeAndPlace = userService.getExamTimeAndplace(stuNum);
+            // 返回 200 状态码和考试时间地点信息
+            System.out.println("获取考试时间地点信息成功");
+            return ResponseEntity.ok(examTimeAndPlace.toString());
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取考试时间地点信息失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    // 定义一个获取用户信息的请求
+    @GetMapping("/profile")
+    public ResponseEntity<String> getUserProfile(@RequestParam String stuNum) {
+        try {
+            // 调用 UserService 的 getProfile 方法，返回一个字符串表示用户信息
+            Profile profile = userService.getUserProfile(stuNum);
+            // 返回 200 状态码和用户信息
+            System.out.println("获取用户信息成功");
+            return ResponseEntity.ok(profile.toString());
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取用户信息失败");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
