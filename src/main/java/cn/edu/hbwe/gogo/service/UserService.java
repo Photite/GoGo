@@ -1,7 +1,9 @@
 package cn.edu.hbwe.gogo.service;
 
-import cn.edu.hbwe.gogo.entity.LoginAuthorization;
+import cn.edu.hbwe.gogo.entity.*;
 import cn.edu.hbwe.gogo.exception.LoginException;
+import com.alibaba.fastjson2.TypeReference;
+import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import cn.edu.hbwe.gogo.dao.UserDao;
@@ -14,13 +16,14 @@ import com.alibaba.fastjson.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -34,30 +37,30 @@ public class UserService {
 
     public boolean login(String stuNum, String password) throws Exception {
         try {
-        // 调用init方法，并使用LoginAuthorization对象存储数据
-        init(auth);
+            // 调用init方法，并使用LoginAuthorization对象存储数据
+            init(auth);
 
-        // 加密密码并使用LoginAuthorization对象中的公钥信息
-        password = RSAEncoder.RSAEncrypt(password, B64.b64tohex(auth.getPublicKey().get("modulus")), B64.b64tohex(auth.getPublicKey().get("exponent")));
-        password = B64.hex2b64(password);
+            // 加密密码并使用LoginAuthorization对象中的公钥信息
+            password = RSAEncoder.RSAEncrypt(password, B64.b64tohex(auth.getPublicKey().get("modulus")), B64.b64tohex(auth.getPublicKey().get("exponent")));
+            password = B64.hex2b64(password);
 
-        // 创建请求头和请求数据
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");
-        Map<String, String> data = new HashMap<>();
-        data.put("csrftoken", auth.getCsrf());
-        data.put("yhm", stuNum);
-        data.put("mm", password);
+            // 创建请求头和请求数据
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            headers.put("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:29.0) Gecko/20100101 Firefox/29.0");
+            Map<String, String> data = new HashMap<>();
+            data.put("csrftoken", auth.getCsrf());
+            data.put("yhm", stuNum);
+            data.put("mm", password);
 
-        // 使用HTTPUtil发送POST请求，传递LoginAuthorization的cookies
-        Connection.Response response = HTTPUtil.sendPostRequest("/jwglxt/xtgl/login_slogin.html", headers, data, auth.getCookies());
+            // 使用HTTPUtil发送POST请求，传递LoginAuthorization的cookies
+            Connection.Response response = HTTPUtil.sendPostRequest("/jwglxt/xtgl/login_slogin.html", headers, data, auth.getCookies());
 
-        // 更新登录成功后的cookies
-        auth.getCookies().put("JSESSIONID", response.cookie("JSESSIONID"));
-        Document document = Jsoup.parse(response.body());
-        // 判断是否登录成功
-        return document.getElementById("tips") == null;
+            // 更新登录成功后的cookies
+            auth.getCookies().put("JSESSIONID", response.cookie("JSESSIONID"));
+            Document document = Jsoup.parse(response.body());
+            // 判断是否登录成功
+            return document.getElementById("tips") == null;
         } catch (Exception e) {
             logger.error("登录失败，原因：{}", e.getMessage());
             throw new LoginException("登录过程出现错误：" + e.getMessage(), e);
@@ -65,30 +68,146 @@ public class UserService {
     }
 
     // 定义一个查询课表的方法，接收学年和学期，返回一个字符串表示课表内容
-    public String getTimetable(int year, int term) throws Exception {
-        // 创建请求头和请求数据
+//    public String getTimetable(int year, int term) throws Exception {
+//        // 创建请求头和请求数据
+//        Map<String, String> headers = createCommonHeaders();
+//        Map<String, String> data = new HashMap<>();
+//        data.put("xnm", String.valueOf(year));
+//        data.put("xqm", String.valueOf(term * term * 3));
+//        // 使用HTTPUtil发送POST请求
+//        Connection.Response response = HTTPUtil.sendPostRequest("/jwglxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", headers, data, auth.getCookies());
+//        // 解析返回的 JSON 数据，获取课表内容
+//        JSONObject jsonObject = JSON.parseObject(response.body());
+//        JSONArray kbList = jsonObject.getJSONArray("kbList");
+//        StringBuilder sb = new StringBuilder();
+//        // 遍历课表列表，拼接课表信息
+//        for (int i = 0; i < kbList.size(); i++) {
+//            JSONObject kb = kbList.getJSONObject(i);
+//            sb.append("课程名称：").append(kb.getString("kcmc")).append("\n");
+//            sb.append("上课时间：").append(kb.getString("xqjmc")).append("第").append(kb.getString("jcs")).append("节\n");
+//            sb.append("上课地点：").append(kb.getString("cdmc")).append("\n");
+//            sb.append("任课教师：").append(kb.getString("xm")).append("\n");
+//            sb.append("周次：").append(kb.getString("zcd")).append("\n");
+//            sb.append("------------------------------\n");
+//        }
+//        // 返回课表信息
+//        return sb.toString();
+//    }
+
+    public List<ClassUnit> getClassTable(String stuNum) throws Exception {
+        System.out.println(stuNum);
+        YearAndSemestersPicker picker = getPicker(stuNum);
         Map<String, String> headers = createCommonHeaders();
+        Term term = picker.getDefaultTerm();
+        //输出picker
+        System.out.println(picker);
+        System.out.println("学期：" + term);
+
+        String xnm = picker.getYears().get(term.getYearsOfSchooling());
+        String xqm = picker.getSemesters().get(term.getSemesterNumber());
+        System.out.println("学年：" + xnm);
+        System.out.println("学期：" + xqm);
+
         Map<String, String> data = new HashMap<>();
-        data.put("xnm", String.valueOf(year));
-        data.put("xqm", String.valueOf(term * term * 3));
-        // 使用HTTPUtil发送POST请求
+        data.put("xnm", String.valueOf(picker.getYears().get(term.getYearsOfSchooling())));
+//        data.put("xqm", String.valueOf(picker.getSemesters().get(term.getSemesterNumber())));
+        data.put("xqm", "3");
+
         Connection.Response response = HTTPUtil.sendPostRequest("/jwglxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", headers, data, auth.getCookies());
-        // 解析返回的 JSON 数据，获取课表内容
-        JSONObject jsonObject = JSON.parseObject(response.body());
-        JSONArray kbList = jsonObject.getJSONArray("kbList");
-        StringBuilder sb = new StringBuilder();
-        // 遍历课表列表，拼接课表信息
-        for (int i = 0; i < kbList.size(); i++) {
-            JSONObject kb = kbList.getJSONObject(i);
-            sb.append("课程名称：").append(kb.getString("kcmc")).append("\n");
-            sb.append("上课时间：").append(kb.getString("xqjmc")).append("第").append(kb.getString("jcs")).append("节\n");
-            sb.append("上课地点：").append(kb.getString("cdmc")).append("\n");
-            sb.append("任课教师：").append(kb.getString("xm")).append("\n");
-            sb.append("周次：").append(kb.getString("zcd")).append("\n");
-            sb.append("------------------------------\n");
+        System.out.println("发送了请求");
+
+        String body = response.body();
+        assertLogin(Jsoup.parse(body));
+
+
+        com.alibaba.fastjson2.JSONArray array = com.alibaba.fastjson2.JSON.parseObject(body).getJSONArray("kbList");
+        if (array.isEmpty()) {
+            throw new IllegalStateException("该学年学期的课表尚未开放!");
         }
-        // 返回课表信息
-        return sb.toString();
+        return array.stream()
+                .map((v) -> {
+                    com.alibaba.fastjson2.JSONObject a = (com.alibaba.fastjson2.JSONObject) v;
+                    String lesson = a.getString("jcs");
+                    String[] ls = lesson.split("-");
+
+                    return new ClassUnit(
+                            a.getString("kcmc"),
+                            a.getString("xm"),
+                            a.getString("cdmc"),
+                            a.getString("zcd"),
+                            new ClassUnit.Range(Integer.parseInt(ls[0]), Integer.parseInt(ls[1]), ClassUnit.FilterType.ALL),
+                            a.getString("xqj")
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    // 定义一个查询学校日期的方法（包括：学期起止时间，当前学期数），接收学号和cookie，返回SchoolCalender
+    public SchoolCalender getSchoolCalender(String stuNum) throws Exception {
+        Objects.requireNonNull(stuNum);
+        Objects.requireNonNull(auth.getCookies());
+        Map<String, String> headers = createCommonHeaders();
+
+        Connection.Response response = HTTPUtil.sendGetRequest("/jwglxt/xtgl/index_cxAreaSix.html?localeKey=zh_CN&gnmkdm=index&su=" + stuNum, headers, auth.getCookies());
+
+        Document document = Jsoup.parse(response.body());
+        System.out.println(document);
+        assertLogin(document);
+        String source = document.getElementsByAttributeValue("colspan", "23").get(0).text();
+
+        String year = source.split("学年")[0];
+        String sem = source.split("学年")[1].split("学期")[0];
+
+
+        int l, r;
+        l = source.indexOf("(");
+        r = source.indexOf(")");
+        source = source.substring(l + 1, r);
+        String[] se = source.split("至");
+
+        String[] starts = se[0].split("-");
+        LocalDate start = LocalDate.of(Integer.parseInt(starts[0]), Integer.parseInt(starts[1]), Integer.parseInt(starts[2]));
+        starts = se[1].split("-");
+        LocalDate end = LocalDate.of(Integer.parseInt(starts[0]), Integer.parseInt(starts[1]), Integer.parseInt(starts[2]));
+
+        Term term1 = new Term(year, sem);
+
+        return new SchoolCalender(start, end, term1);
+    }
+
+
+    public YearAndSemestersPicker getPicker(String stuNum) throws Exception {
+        System.out.println("获取了默认学期");
+        HashMap<String, String> years = new HashMap<>();
+        HashMap<String, String> semesters = new HashMap<>();
+        String defaultYears = null;
+        String defaultTeamVal = null;
+
+        Map<String, String> headers = createCommonHeaders();
+
+        Connection.Response response = HTTPUtil.sendGetRequest("/jwglxt/cjcx/cjcx_cxDgXscj.html?gnmkdm=N305005&layout=default&su=" + stuNum, headers, auth.getCookies());
+        System.out.println("发送了请求");
+        assertLogin(Jsoup.parse(response.body()));
+        Document document = Jsoup.parse(response.body());
+
+        assertLogin(document);
+
+        for (Element e : Objects.requireNonNull(document.getElementById("xnm")).getElementsByTag("option")) {
+
+            if (e.attr("selected").equals("selected")) {
+                defaultYears = e.text();
+            }
+            years.put(e.text(), e.attr("value"));
+        }
+
+        for (Element e : Objects.requireNonNull(document.getElementById("xqm")).getElementsByTag("option")) {
+            if (!e.attr("selected").isEmpty()) {
+                defaultTeamVal = e.text();
+            }
+            semesters.put(e.text(), e.attr("value"));
+        }
+        Term term = new Term(defaultYears, defaultTeamVal);
+        return new YearAndSemestersPicker(years, semesters, term);
     }
 
     public boolean logout() {
@@ -121,6 +240,27 @@ public class UserService {
         } else {
             throw new IllegalArgumentException("LoginAuthorization instance or its cookies must not be null");
         }
+    }
+
+    public void assertLogin(Document doc) throws IOException {
+        for (Element e : doc.getElementsByTag("h5")) {
+            if (e.text().equals("用户登录")) {
+
+                Element test = doc.getElementById("tips");
+
+                if (test != null) {
+                    throw new LoginException.CookieOutOfDate(test.text());
+                }
+
+                throw new LoginException.CookieOutOfDate();
+            }
+        }
+    }
+
+    @SneakyThrows
+    public void assertLogin(String cookie) {
+        assertLogin(HTTPUtil.newSession("/xtgl/index_initMenu.html")
+                .header("Cookie", cookie).get());
     }
 
     private Map<String, String> createCommonHeaders() {
@@ -168,4 +308,43 @@ public class UserService {
             logger.error("Failed to get RSA public key", e);
         }
     }
+
+
+    //    public Map<String, List<GPAScore>> getGPAScores(String cookie, String stuID) throws IOException {
+//        HashMap<String, List<GPAScore>> map = new HashMap<>();
+//        Connection.Response resp = HTTPUtil.newSession("/xmfzgl/xshdfzcx_cxXshdfzcxIndex.html?doType=query&gnmkdm=N4780&su=", stuID)
+//                .header("Cookie", cookie)
+//                .data("nd", String.valueOf(System.currentTimeMillis()))
+//                .data("_search", "false")
+//                .data("queryModel.showCount", "5000")
+//                .data("queryModel.currentPage", "1")
+//                .data("queryModel.sortName:", "")
+//                .data("queryModel.sortOrder", "asc")
+//                .data("time", "0")
+//                .execute();
+//        String body = resp.body();
+//        assertLogin(Jsoup.parse(body));
+//        com.alibaba.fastjson2.JSON.parseObject(body).getJSONArray("items").forEach((i) -> {
+//            com.alibaba.fastjson2.JSONObject object = (com.alibaba.fastjson2.JSONObject) i;
+//            String name = object.getString("xmlbmc");
+//            try {
+//                map.put(name, getInnovationByTag(cookie, stuID, name));
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        });
+//        return map;
+//    }
+
+    // 定义一个查询成绩的方法，接收学号，返回一个字符串表示成绩内容获取创新学分
+//    public List<GPAScore> getInnovationByTag(String cookie, String stuID, String name) throws IOException {
+//        Connection.Response resp = HTTPUtil.newSession("/jwglxt/xmfzgl/xshdfzcx_cxXshdfzcxIndex.html?gnmkdm=N4780&layout=default&su=", stuID)
+//                .header("Cookie", cookie)
+//                .data("xmlbmc", name)
+//                .method(Connection.Method.POST).execute();
+//        String body = resp.body();
+//        assertLogin(Jsoup.parse(body));
+//        return com.alibaba.fastjson2.JSON.parseArray(com.alibaba.fastjson2.JSON.parseObject(body).getJSONArray("items").toString(), new TypeReference<GPAScore>() {
+//        }.getType());
+//    }
 }
