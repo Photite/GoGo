@@ -10,10 +10,8 @@ public class ExamResult {
     private String year;
     @JSONField(name = "xqm")
     private String semester;
-
     @JSONField(name = "jxb_id")
     private String detailsID;
-
     //================下面是有用的信息================//
     @JSONField(name = "kcmc")
     private String name; //课程名称
@@ -52,7 +50,6 @@ public class ExamResult {
         FAIL, //老师不捞我，呜呜呜
         SUCCESS_RE //重修或补考成功
     }
-
 
 
 }

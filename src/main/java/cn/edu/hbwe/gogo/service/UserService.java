@@ -2,7 +2,9 @@ package cn.edu.hbwe.gogo.service;
 
 import cn.edu.hbwe.gogo.entity.*;
 import cn.edu.hbwe.gogo.exception.LoginException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.SneakyThrows;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import cn.edu.hbwe.gogo.dao.UserDao;
@@ -33,7 +35,28 @@ public class UserService {
     // 引入LoginAuthorization类实例
     private final LoginAuthorization auth = new LoginAuthorization();
 
-    public boolean login(String stuNum, String password) {
+    public User login(String username, String password) {
+        String pwd = DigestUtils.md5Hex(password + username);
+        // 使用QueryWrapper构建查询条件
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username).eq("password", pwd);
+        // 调用UserDao的selectOne方法来进行用户登录验证
+        return userDao.selectOne(queryWrapper);
+    }
+
+    public boolean Register(String username, String password) {
+        String pwd = DigestUtils.md5Hex(password + username);
+        int i = userDao.insert(new User(username, pwd));
+        return i > 0;
+    }
+
+    public User findByUsername(String username) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        return userDao.selectOne(queryWrapper);
+    }
+
+    public boolean stuLogin(String stuNum, String password) {
         try {
             // 调用init方法，并使用LoginAuthorization对象存储数据
             init(auth);
@@ -434,31 +457,34 @@ public class UserService {
     }
 
 
-    //    public Map<String, List<GPAScore>> getGPAScores(String cookie, String stuID) throws IOException {
-//        HashMap<String, List<GPAScore>> map = new HashMap<>();
-//        Connection.Response resp = HTTPUtil.newSession("/xmfzgl/xshdfzcx_cxXshdfzcxIndex.html?doType=query&gnmkdm=N4780&su=", stuID)
-//                .header("Cookie", cookie)
-//                .data("nd", String.valueOf(System.currentTimeMillis()))
-//                .data("_search", "false")
-//                .data("queryModel.showCount", "5000")
-//                .data("queryModel.currentPage", "1")
-//                .data("queryModel.sortName:", "")
-//                .data("queryModel.sortOrder", "asc")
-//                .data("time", "0")
-//                .execute();
-//        String body = resp.body();
-//        assertLogin(Jsoup.parse(body));
-//        com.alibaba.fastjson2.JSON.parseObject(body).getJSONArray("items").forEach((i) -> {
-//            com.alibaba.fastjson2.JSONObject object = (com.alibaba.fastjson2.JSONObject) i;
-//            String name = object.getString("xmlbmc");
-//            try {
-//                map.put(name, getInnovationByTag(cookie, stuID, name));
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        });
-//        return map;
-//    }
+    public String getGPAScores(String stuNum) throws Exception {
+
+        Map<String, String> headers = createCommonHeaders();
+
+
+        String gpa = "";
+        Connection.Response response = HTTPUtil.sendGetRequest("/jwglxt/xsxy/xsxyqk_cxXsxyqkIndex.html?gnmkdm=N105515&layout=default&su=" + stuNum, headers, auth.getCookies());
+        String body = response.body();
+        assertLogin(Jsoup.parse(body));
+        System.out.println(Jsoup.parse(body));
+
+        Document doc = Jsoup.parse(body);
+        Elements elements = doc.select("font[style='color: red;']");  // 使用选择器定位所有红色的<font>元素
+
+        for (Element element : elements) {
+            String text = element.text().trim();
+            try {
+                Float.parseFloat(text);  // 尝试将文本转换为浮点数
+                // 如果没有抛出异常，那么这个元素的文本就是GPA
+                System.out.println("GPA: " + text);
+                gpa = text;
+                break;  // 找到GPA后就可以停止遍历
+            } catch (NumberFormatException e) {
+                // 如果抛出异常，那么这个元素的文本不是GPA，继续遍历下一个元素
+            }
+        }
+        return gpa;
+    }
 
     // 定义一个查询成绩的方法，接收学号，返回一个字符串表示成绩内容获取创新学分
 //    public List<GPAScore> getInnovationByTag(String cookie, String stuID, String name) throws IOException {

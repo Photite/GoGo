@@ -19,12 +19,47 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // 定义一个登录的请求，接收学号和密码
+    //定义一个小程序用户登录的请求，接收用户名和密码
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String stuNum, @RequestParam String password) {
+    public ResponseEntity<String> login(@RequestBody User object) {
         try {
             // 调用 UserService 的 login 方法，返回一个布尔值表示是否登录成功
-            boolean result = userService.login(stuNum, password);
+            User user = userService.login(object.getUsername(), object.getPassword());
+            if (user != null) {
+                // 如果登录成功，返回 200 状态码和成功信息
+                System.out.println("登录成功");
+                return ResponseEntity.ok("登录成功");
+            } else {
+                // 如果登录失败，返回 401 状态码和失败信息
+                System.out.println("登录失败");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("登录失败");
+            }
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/register")
+    public ResultVo<User> Register(@RequestBody User object) {
+        boolean flag = userService.Register(object.getUsername(), object.getPassword());
+        ResultVo<User> vo = null;
+        if (flag) {
+            //注册成功
+            vo = new ResultVo<>("注册成功", true, null);
+        } else {
+            //注册成功
+            vo = new ResultVo<>("用户信息注册失败", false, null);
+        }
+        return vo;
+    }
+
+    // 定义一个模拟登录教务系统的请求，接收学号和密码
+    @PostMapping("/stuLogin")
+    public ResponseEntity<String> stulogin(@RequestParam String stuNum, @RequestParam String password) {
+        try {
+            // 调用 UserService 的 login 方法，返回一个布尔值表示是否登录成功
+            boolean result = userService.stuLogin(stuNum, password);
             if (result) {
                 // 如果登录成功，返回 200 状态码和成功信息
                 System.out.println("登录成功");
@@ -41,12 +76,10 @@ public class UserController {
     }
 
     // 定义一个查询课表的请求，接收学年和学期
-    @GetMapping("/timetable")
-//    public ResponseEntity<String> getTimetable(@RequestParam int year, @RequestParam int term) {
+    @GetMapping("/getTimetable")
     public ResponseEntity<String> getTimetable(@RequestParam String stuNum) {
         try {
-            // 调用 UserService 的 getTimetable 方法，返回一个字符串表示课表内容
-//            String timetable = userService.getTimetable(year, term);
+            // 调用 UserService 的 getClassTable 方法，返回一个字符串表示课表内容
             List<ClassUnit> timetable = userService.getClassTable(stuNum);
             ObjectMapper mapper = new ObjectMapper();
             String jsonResult = mapper.writeValueAsString(timetable);
@@ -62,8 +95,8 @@ public class UserController {
         }
     }
 
-    // 定义一个查询学校日期的请求
-    @GetMapping("/schoolCalender")
+    // 定义一个查询学校当前学期起止时间的请求
+    @GetMapping("/getSchoolCalender")
     public ResponseEntity<String> getSchoolCalender(@RequestParam String stuNum) {
         try {
             // 调用 UserService 的 getSchoolCalender 方法，返回一个字符串表示学校日期
@@ -80,8 +113,8 @@ public class UserController {
     }
 
     // 定义一个获取考试信息的请求
-    @GetMapping("/exam")
-    public ResponseEntity<String> getExam(@RequestParam String stuNum) {
+    @GetMapping("/getExamInfo")
+    public ResponseEntity<String> getExamInfo(@RequestParam String stuNum) {
         try {
             // 调用 UserService 的 getExam 方法，返回一个字符串表示考试信息
             List<ExamResult> exam = userService.getExamList(stuNum);
@@ -96,7 +129,7 @@ public class UserController {
     }
 
     // 定义一个获取考试详情的请求
-    @GetMapping("/examDetail")
+    @GetMapping("/getExamDetail")
     public ResponseEntity<String> getExamDetail(@RequestParam String stuNum) {
         try {
             //新建一个ExamResult对象
@@ -127,7 +160,7 @@ public class UserController {
     }
 
     // 定义一个获取考试时间地点的请求
-    @GetMapping("/examTimeAndPlace")
+    @GetMapping("/getExamTimeAndPlace")
     public ResponseEntity<String> getExamTimeAndPlace(@RequestParam String stuNum) {
         try {
             // 调用 UserService 的 getExamTimeAndPlace 方法，返回一个字符串表示考试时间地点信息
@@ -143,7 +176,7 @@ public class UserController {
     }
 
     // 定义一个获取用户信息的请求
-    @GetMapping("/profile")
+    @GetMapping("/getUserProfile")
     public ResponseEntity<String> getUserProfile(@RequestParam String stuNum) {
         try {
             // 调用 UserService 的 getProfile 方法，返回一个字符串表示用户信息
@@ -158,8 +191,24 @@ public class UserController {
         }
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout() {
+    //定义一个获取GPA的请求
+    @GetMapping("/getGPA")
+    public ResponseEntity<String> getGPA(@RequestParam String stuNum) {
+        try {
+            // 调用 UserService 的 getGPA 方法，返回一个字符串表示GPA
+            String gpa = userService.getGPAScores(stuNum);
+            // 返回 200 状态码和GPA
+            System.out.println("获取GPA成功");
+            return ResponseEntity.ok(gpa);
+        } catch (Exception e) {
+            // 如果发生异常，返回 500 状态码和异常信息
+            System.out.println("获取GPA失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/stuLogout")
+    public ResponseEntity<String> stuLogout() {
         boolean result = userService.logout();
         if (result) {
             System.out.println("退出成功");

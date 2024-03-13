@@ -1,12 +1,12 @@
 package cn.edu.hbwe.gogo.entity;
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Setter
 @Getter
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
 
     private Integer id;
@@ -18,5 +18,9 @@ public class User {
     private String jwxtUsername;
     private String jwxtPassword;
 
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
 
 }
