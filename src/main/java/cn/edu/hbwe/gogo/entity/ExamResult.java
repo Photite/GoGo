@@ -3,6 +3,9 @@ package cn.edu.hbwe.gogo.entity;
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 
+/**
+ * @author Photite
+ */
 @Data
 public class ExamResult {
 
@@ -14,24 +17,32 @@ public class ExamResult {
     private String detailsID;
     //================下面是有用的信息================//
     @JSONField(name = "kcmc")
-    private String name; //课程名称
+    //课程名称
+    private String name;
     @JSONField(name = "tjrxm")
-    private String teacher; //老师名字
+    //老师名字
+    private String teacher;
     @JSONField(name = "xf")
-    private String credit; //学分
+    //学分
+    private String credit;
     @JSONField(name = "jd")
-    private String gradePoint; //绩点
+    //绩点
+    private String gradePoint;
     @JSONField(name = "xfjd")
-    private String crTimesGp; //学分*绩点
+    //学分*绩点
+    private String crTimesGp;
     @JSONField(name = "bfzcj")
-    private String absoluteScore; //考试绝对分数
+    //考试绝对分数
+    private String absoluteScore;
     @JSONField(name = "cj")
-    private String relateScore; //评级
+    //评级
+    private String relateScore;
     @JSONField(name = "ksxzdm")
-    private String completionCode; //挂科标识
-
+    //挂科标识
+    private String completionCode;
+    //是否是学位课
     @JSONField(name = "sfxwkc")
-    private boolean degreeProgram; //是否是学位课
+    private boolean degreeProgram;
 
     public Status getStatus() {
         if (Double.compare(Double.parseDouble(absoluteScore), 60) == -1) {
@@ -46,9 +57,12 @@ public class ExamResult {
     }
 
     public enum Status {
-        SUCCESS, //考试一遍过
-        FAIL, //老师不捞我，呜呜呜
-        SUCCESS_RE //重修或补考成功
+        //考试一遍过
+        SUCCESS,
+        //老师不捞我，呜呜呜
+        FAIL,
+        //重修或补考成功
+        SUCCESS_RE
     }
 
 

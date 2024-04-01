@@ -1,18 +1,18 @@
 package cn.edu.hbwe.gogo.service;
 
+import cn.edu.hbwe.gogo.dao.UserDao;
 import cn.edu.hbwe.gogo.entity.*;
 import cn.edu.hbwe.gogo.exception.LoginException;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import lombok.SneakyThrows;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import cn.edu.hbwe.gogo.dao.UserDao;
 import cn.edu.hbwe.gogo.utils.B64;
 import cn.edu.hbwe.gogo.utils.HTTPUtil;
 import cn.edu.hbwe.gogo.utils.RSAEncoder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import lombok.SneakyThrows;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -25,6 +25,9 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * @author Photite
+ */
 @Service
 public class UserService {
 
@@ -44,7 +47,7 @@ public class UserService {
         return userDao.selectOne(queryWrapper);
     }
 
-    public boolean Register(String username, String password) {
+    public boolean register(String username, String password) {
         String pwd = DigestUtils.md5Hex(password + username);
         int i = userDao.insert(new User(username, pwd));
         return i > 0;
@@ -60,7 +63,6 @@ public class UserService {
         try {
             // 调用init方法，并使用LoginAuthorization对象存储数据
             init(auth);
-
             // 加密密码并使用LoginAuthorization对象中的公钥信息
             password = RSAEncoder.RSAEncrypt(password, B64.b64tohex(auth.getPublicKey().get("modulus")), B64.b64tohex(auth.getPublicKey().get("exponent")));
             password = B64.hex2b64(password);
@@ -130,6 +132,7 @@ public class UserService {
                             a.getString("cdmc"),
                             a.getString("zcd"),
                             new ClassUnit.Range(Integer.parseInt(ls[0]), Integer.parseInt(ls[1]), ClassUnit.FilterType.ALL),
+                            a.getString("kch_id"),
                             a.getString("xqj")
                     );
                 })
@@ -168,13 +171,19 @@ public class UserService {
         return new SchoolCalender(start, end, term1);
     }
 
-    public List<ExamResult> getExamList(String stuNum) throws Exception {
+    public List<ExamResult> getExamList(String stuNum, int all) throws Exception {
+        System.out.println(all + "all");
         YearAndSemestersPicker picker = getPicker(stuNum);
         Term term = picker.getDefaultTerm();
         String xnm = picker.getYears().get(term.getYearsOfSchooling());
+        String xqm;
+        if (all == 1) {
+            xqm = "";
+        } else {
 //        String xqm = picker.getSemesters().get(term.getSemesterNumber());
-        String xqm = "3";
-
+            xqm = "3";
+        }
+        System.out.println("学期：" + xqm);
         try {
             Objects.requireNonNull(xnm);
             Objects.requireNonNull(xqm);
@@ -234,15 +243,13 @@ public class UserService {
         Elements ele = document.getElementsByClass("form-control-static");
 
         return new Profile(
+                ele.get(0).text(),
                 ele.get(1).text(),
-                ele.get(14).text(),
-                ele.get(15).text(),
-                a,
+                ele.get(23).text(),
+                ele.get(24).text(),
                 ele.get(26).text(),
-                ele.get(27).text(),
-                ele.get(7).text(),
-                ele.get(10).text(),
-                ele.get(24).text()
+                ele.get(9).text()
+
         );
     }
 
@@ -360,6 +367,9 @@ public class UserService {
 
     public boolean logout() {
         try {
+            if (auth.getCookies() == null || auth.getCookies().isEmpty()) {
+                return false;
+            }
             // 创建请求头
             Map<String, String> headers = createCommonHeaders();
             // 使用HTTPUtil发送POST请求
@@ -486,41 +496,4 @@ public class UserService {
         return gpa;
     }
 
-    // 定义一个查询成绩的方法，接收学号，返回一个字符串表示成绩内容获取创新学分
-//    public List<GPAScore> getInnovationByTag(String cookie, String stuID, String name) throws IOException {
-//        Connection.Response resp = HTTPUtil.newSession("/jwglxt/xmfzgl/xshdfzcx_cxXshdfzcxIndex.html?gnmkdm=N4780&layout=default&su=", stuID)
-//                .header("Cookie", cookie)
-//                .data("xmlbmc", name)
-//                .method(Connection.Method.POST).execute();
-//        String body = resp.body();
-//        assertLogin(Jsoup.parse(body));
-//        return com.alibaba.fastjson2.JSON.parseArray(com.alibaba.fastjson2.JSON.parseObject(body).getJSONArray("items").toString(), new TypeReference<GPAScore>() {
-//        }.getType());
-//    }
-    // 定义一个查询课表的方法，接收学年和学期，返回一个字符串表示课表内容
-//    public String getTimetable(int year, int term) throws Exception {
-//        // 创建请求头和请求数据
-//        Map<String, String> headers = createCommonHeaders();
-//        Map<String, String> data = new HashMap<>();
-//        data.put("xnm", String.valueOf(year));
-//        data.put("xqm", String.valueOf(term * term * 3));
-//        // 使用HTTPUtil发送POST请求
-//        Connection.Response response = HTTPUtil.sendPostRequest("/jwglxt/kbcx/xskbcx_cxXsKb.html?gnmkdm=N2151", headers, data, auth.getCookies());
-//        // 解析返回的 JSON 数据，获取课表内容
-//        JSONObject jsonObject = JSON.parseObject(response.body());
-//        JSONArray kbList = jsonObject.getJSONArray("kbList");
-//        StringBuilder sb = new StringBuilder();
-//        // 遍历课表列表，拼接课表信息
-//        for (int i = 0; i < kbList.size(); i++) {
-//            JSONObject kb = kbList.getJSONObject(i);
-//            sb.append("课程名称：").append(kb.getString("kcmc")).append("\n");
-//            sb.append("上课时间：").append(kb.getString("xqjmc")).append("第").append(kb.getString("jcs")).append("节\n");
-//            sb.append("上课地点：").append(kb.getString("cdmc")).append("\n");
-//            sb.append("任课教师：").append(kb.getString("xm")).append("\n");
-//            sb.append("周次：").append(kb.getString("zcd")).append("\n");
-//            sb.append("------------------------------\n");
-//        }
-//        // 返回课表信息
-//        return sb.toString();
-//    }
 }

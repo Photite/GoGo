@@ -17,78 +17,86 @@
         <java.version>17</java.version>
     </properties>
     <dependencies>
+        <!-- MyBatis Plus Spring Boot Starter，用于简化 MyBatis 的配置和使用 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>3.5.5</version>
         </dependency>
+        <!-- Spring Boot Starter for Redis，用于在 Spring Boot 应用中使用 Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+        <!-- Spring Boot Starter for Web，包括 RESTful、JSON、Tomcat 等 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- MySQL JDBC driver，用于在 Java 应用中连接 MySQL 数据库 -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- MyBatis Plus Boot Starter，用于简化 MyBatis 的配置和使用 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.5.3.1</version>
         </dependency>
+        <!-- Log4j Core，用于在应用中添加日志功能 -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>2.19.0</version>
         </dependency>
+        <!-- Druid，阿里巴巴的数据库连接池，用于管理数据库连接 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
             <version>1.1.16</version>
         </dependency>
+        <!-- Apache Commons Codec，提供了常见的编解码功能，如 Base64、Hex、Phonetic 和 URLs -->
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
+        <!-- Lombok，一个可以通过注解方式使 Java 代码更简洁的库 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- Spring Boot Starter for Testing，包括 JUnit、Spring Test、Mockito 等 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Jsoup，一个用于解析 HTML 的 Java 库 -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.17.2</version>
         </dependency>
-        <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
-            <version>2.0.9</version>
-        </dependency>
+        <!-- Fastjson，阿里巴巴的 JSON 处理库，用于在 Java 应用中处理 JSON 数据 -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>2.0.9</version>
         </dependency>
-
+        <!-- Log4j API，用于在应用中添加日志功能 -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
             <version>2.14.1</version>
         </dependency>
+        <!-- Jackson，用于在 Java 应用中处理 JSON 数据 解决Java8日期格式的处理-->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.16.1</version>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.12.3</version>
         </dependency>
     </dependencies>
 

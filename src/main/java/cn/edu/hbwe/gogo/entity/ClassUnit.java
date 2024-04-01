@@ -8,15 +8,19 @@ import lombok.ToString;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Photite
+ */
 @Data
 @ToString
 public class ClassUnit {
-    public static ClassUnit EMPTY = new ClassUnit(null, null, null, null, null, "0");
+    public static ClassUnit EMPTY = new ClassUnit(null, null, null, null, null, null, "0");
 
     private String name;
     private String teacher;
     private String room;
     private Range lesson;
+    private String code;
     private int dayInWeek;
     private List<Range> weekAsMinMax;
     private String weekEachLesson;
@@ -27,6 +31,7 @@ public class ClassUnit {
             @JSONField(name = "room") String room,
             @JSONField(name = "weekEachLesson") String weekEachLesson,
             @JSONField(name = "lesson") Range lesson,
+            @JSONField(name = "code") String code,
             @JSONField(name = "dayInWeek") String dayInWeek
 //            @JSONField(name = "kcmc") String name,
 //            @JSONField(name = "xm") String teacher,
@@ -45,6 +50,7 @@ public class ClassUnit {
         this.dayInWeek = Integer.parseInt(dayInWeek);
         this.weekEachLesson = weekEachLesson;
         this.lesson = lesson;
+        this.code = code;
 
         List<Range> rtn = new ArrayList<>();
         for (String a : weekEachLesson.split(",")) {
@@ -75,7 +81,7 @@ public class ClassUnit {
         private final List<ClassUnit> conflict;
 
         public Conflict(List<ClassUnit> conflict) {
-            super("冲突课程", null, "点我查看", null, null, null);
+            super("冲突课程", null, "点我查看", null, null, null, null);
             this.conflict = conflict;
         }
     }
@@ -113,8 +119,11 @@ public class ClassUnit {
     }
 
     public enum FilterType {
-        ALL, //单双周
-        SINGULAR,//单周
-        EVEN;//双周
+        //单双周
+        ALL,
+        //单周
+        SINGULAR,
+        //双周
+        EVEN;
     }
 }
